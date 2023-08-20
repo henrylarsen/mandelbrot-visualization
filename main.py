@@ -13,7 +13,7 @@ max_imaginary = 2.0
 number_points_real = 1000
 number_points_imaginary = 1000
 
-number_iterations = 100
+iterations = 100
 
 complex_plane = np.empty([number_points_real, number_points_imaginary], dtype=complex)
 
