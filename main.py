@@ -17,12 +17,20 @@ number_points_imaginary = 500
 
 zoom_factor = 0.1
 
-iterations = 500
+iterations = 1000
 
 
 def setup_plane(min_r, max_r, min_i, max_i):
-    complex_plane = np.empty([number_points_real, number_points_imaginary], dtype=complex)
+    # complex_plane = np.empty([number_points_real, number_points_imaginary], dtype=complex)
 
+    real = np.linspace(min_real, max_real, number_points_real)
+    imaginary = np.linspace(min_imaginary, max_imaginary, number_points_imaginary)
+    X, Y = np.meshgrid(real, imaginary)
+    complex_plane = X + 1j * Y
+    return complex_plane
+
+
+"""
     # set up complex plane
     for j in range(number_points_real):
         for i in range(number_points_imaginary):
@@ -33,8 +41,7 @@ def setup_plane(min_r, max_r, min_i, max_i):
             complex_plane[j, i] = mpc(real_component, imaginary_component)
 
     # print(f'complex_plane: {complex_plane[0][0]}, {complex_plane[499][499]} ')
-
-    return complex_plane
+"""
 
 
 # calculate mandelbrot set
@@ -57,21 +64,56 @@ def calculate_julia(z0, c, max_iterations=iterations):
 
 
 def plot_mandelbrot(x_min, x_max, y_min, y_max):
+
     complex_plane = setup_plane(x_min, x_max, y_min, y_max)
-    mapped_plane = np.empty([number_points_real, number_points_imaginary], dtype=bool)
-    for j in range(number_points_real):
-        for i in range(number_points_imaginary):
-            mapped_plane[j, i] = calculate_mandelbrot(complex_plane[i, j])
+    elements_still_in_set = np.ones((number_points_real, number_points_imaginary), dtype=bool)
+    elements_mapped = np.zeros((number_points_real, number_points_imaginary), dtype=complex)
+
+    for iteration in range(iterations):
+        elements_mapped[elements_still_in_set] = elements_mapped[elements_still_in_set]**2 + \
+                                                 complex_plane[elements_still_in_set]
+        mask = np.logical_and(np.absolute(elements_mapped) > 2, elements_still_in_set)
+    #     Add a pixel grid here if looking for other more than boolean values with pixel_grid
+        elements_still_in_set = np.logical_and(elements_still_in_set, np.logical_not(mask))
+
+
+
+    # pixel_grid = np.zeros((number_points_real, number_points_imaginary, 3), dtype=np.uint8)
+    #
+    # complex_plane = setup_plane(x_min, x_max, y_min, y_max)
+    # mapped_plane = np.zeros_like(complex_plane)
+    # # print(f'mapped_plane: {mapped_plane}')
+    # elements_todo = np.ones((number_points_real, number_points_imaginary), dtype=bool)
+    # for iteration in range(iterations):
+    #     mapped_plane[elements_todo] = mapped_plane[elements_todo] ** 2 + complex_plane[elements_todo]
+    #     mask = np.logical_and(np.absolute(mapped_plane) > 2, elements_todo)
+    #     pixel_grid[mask, :] = (iteration, iteration, iteration)
+    #     elements_todo = np.logical_and(elements_todo, np.logical_not(mask))
+
+    # for j in range(number_points_real):
+    #     for i in range(number_points_imaginary):
+    #         mapped_plane[j, i] = calculate_mandelbrot(complex_plane[i, j])
             # mapped_plane[j, i] = calculate_julia(complex_plane[j, i], complex(0.28, 0.008))
 
     # Visualize the Mandelbrot set
     end = time.time()
     print(f'compute time: {end - start}')
-    plt.imshow(mapped_plane, extent=(x_min, x_max, y_min, y_max), cmap="inferno", origin="lower")
+    plt.imshow(elements_still_in_set, extent=(x_min, x_max, y_min, y_max), cmap="inferno", origin="lower")
     plt.colorbar()
     plt.title("Mandelbrot Set")
     plt.xlabel("Real")
     plt.ylabel("Imaginary")
+
+
+def plot_mandelbrot2(x_min, x_max, y_min, y_max):
+    real_axis = np.linspace(min_real, max_real, num=number_points_real)
+    imaginary_axis = np.linspace(min_imaginary, max_imaginary, num=number_points_imaginary)
+
+    complex_grid_np = np.zeros((number_points_real, number_points_imaginary), dtype=complex)
+    real, imag = np.meshgrid(real_axis, imaginary_axis)
+    complex_grid_np.real = real
+    complex_grid_np.imag = imag
+
 
 
 def zoom(event):
